@@ -4,9 +4,11 @@ class StateRoot(StateMachine):
 
     def __init__(self,name):
         super().__init__(name)
+        self.enter_called = False
 
     def on_enter(self,state,event):
         self._log_event(event,"Entering")
+        self.enter_called = True
 
     def on_exit(self,state,event):
         self._log_event(event,"Exiting")
@@ -29,11 +31,15 @@ class StateRoot(StateMachine):
             "mystery":self.on_mystery,
         }
 
-
 class StatePaused(State):
+
+    def __init__(self,name):
+        super().__init__(name)
+        self.enter_called = False
 
     def on_enter(self,state,event):
         self._log_event(event, "Entering")
+        self.enter_called = True
 
     def on_exit(self,state,event):
         self._log_event(event,"Exiting")
@@ -50,8 +56,13 @@ class StatePaused(State):
 
 class StateWorking(StateMachine):
 
+    def __init__(self,name):
+        super().__init__(name)
+        self.enter_called = False
+
     def on_enter(self,state,event):
         self._log_event(event,"Entering")
+        self.enter_called = True
 
     def on_exit(self,state,event):
         self._log_event(event,"Exiting")
@@ -68,8 +79,13 @@ class StateWorking(StateMachine):
 
 class Substate1(State):
 
+    def __init__(self,name):
+        super().__init__(name)
+        self.enter_called = False
+
     def on_enter(self,state,event):
         self._log_event(event,"Entering")
+        self.enter_called = True
 
     def on_exit(self,state,event):
         self._log_event(event,"Exiting")
@@ -86,8 +102,13 @@ class Substate1(State):
 
 class Substate2(State):
 
+    def __init__(self,name):
+        super().__init__(name)
+        self.enter_called = False
+
     def on_enter(self,state,event):
         self._log_event(event,"Entering")
+        self.enter_called = True
 
     def on_exit(self,state,event):
         self._log_event(event,"Exiting")
@@ -129,6 +150,11 @@ def test_substate_history():
 
     root.initialize()
     root.to_plantuml()
+
+    # Verify initialize called on_enter for all states on path to initial leaf state.
+    assert root.enter_called
+    assert state_working.enter_called
+    assert substate1.enter_called
 
     # Verify we start in correct state
     assert root.state == state_working

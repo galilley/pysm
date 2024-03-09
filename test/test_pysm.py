@@ -2,6 +2,7 @@ import mock
 import pytest
 import pysm
 import logging
+import inspect
 from pysm import (Event, State, StateMachine, StateMachineException, Stack,
                   any_event, logger)
 _e = Event
@@ -81,11 +82,15 @@ def test_new_sm():
     sm.add_transition(running, idling, events=['stop'])
     sm.initialize()
     assert sm.state == idling
+
+    assert idling_mock.call_count == 1
+    assert idling_mock.call_args[0] == (idling, 'on_enter')
+
     sm.dispatch(_e('run'))
     assert sm.state == running
     assert run_call_mock.call_count == 1
     assert run_call_mock.call_args[0] == (idling, None, {})
-    assert idling_mock.call_count == 1
+    assert idling_mock.call_count == 2
     assert idling_mock.call_args[0] == (idling, 'on_exit')
     assert running_mock.call_count == 1
     assert running_mock.call_args[0] == ('running, enter',)
@@ -100,7 +105,7 @@ def test_new_sm():
 
     sm.dispatch(_e('stop'))
     assert sm.state == idling
-    assert idling_mock.call_count == 2
+    assert idling_mock.call_count == 3
     assert idling_mock.call_args[0] == (idling, 'on_enter')
     assert running_mock.call_count == 2
     assert running_mock.call_args[0] == ('running, exit',)
@@ -194,14 +199,15 @@ def test_conditions():
 def test_internal_transition():
     class Foo(object):
         def __init__(self):
-            self.value = False
+            self.enter_called = False
+            self.exit_called = False
     foo = Foo()
 
     def on_enter(state, event):
-        foo.value = True
+        foo.enter_called = True
 
     def on_exit(state, event):
-        foo.value = True
+        foo.exit_called = True
 
     idling = State('idling')
     idling.handlers = {
@@ -213,11 +219,18 @@ def test_internal_transition():
     sm.add_state(idling, initial=True)
     sm.add_transition(idling, None, events=['internal_transition'])
     sm.add_transition(idling, idling, events=['external_transition'])
+    assert foo.enter_called is False
     sm.initialize()
+    assert foo.enter_called is True
+
+    foo.enter_called = False
     sm.dispatch(_e('internal_transition'))
-    assert foo.value is False
+    assert foo.enter_called is False
+    assert foo.exit_called is False
+
     sm.dispatch(_e('external_transition'))
-    assert foo.value is True
+    assert foo.enter_called
+    assert foo.exit_called
 
 
 def test_hsm_init():
@@ -299,10 +312,20 @@ def test_enter_exit_on_transitions():
     s2 = StateMachine('s2')
 
     def on_enter(state, event):
+        # Test created before StateMachine.initialize properly initalized
+        # by calling on_enter for full state path.
+        if 'initialize' in [f.function for f in inspect.stack()]:
+            return
+
         assert state == m.leaf_state
         test_list.append(('enter', state))
 
     def on_exit(state, event):
+        # Test created before StateMachine.initialize properly initalized
+        # by calling on_enter for full state path.
+        if 'initialize' in [f.function for f in inspect.stack()]:
+            return
+
         assert state == m.leaf_state
         test_list.append(('exit', state))
 
@@ -1135,10 +1158,20 @@ def test_event_propagate_enter_exit():
     s4 = State('s4')
 
     def do(state, event):
+        # Test created before StateMachine.initialize properly initalized
+        # by calling on_enter for full state path.
+        if 'initialize' in [f.function for f in inspect.stack()]:
+            return
+
         event.cargo['source_event'].cargo['data'].append(state)
         assert state == m.leaf_state
 
     def do_with_propagate(state, event):
+        # Test created before StateMachine.initialize properly initalized
+        # by calling on_enter for full state path.
+        if 'initialize' in [f.function for f in inspect.stack()]:
+            return
+
         event.cargo['source_event'].cargo['data'].append(state)
         event.propagate = True
         assert state == m.leaf_state
@@ -1174,10 +1207,20 @@ def test_event_propagate_enter_exit():
 
 def test_previous_state_with_source_event():
     def do(state, event):
+        # Test created before StateMachine.initialize properly initalized
+        # by calling on_enter for full state path.
+        if 'initialize' in [f.function for f in inspect.stack()]:
+            return
         event.cargo['source_event'].cargo['data'].append(state)
+
         assert state == m.leaf_state
 
     def do_with_propagate(state, event):
+        # Test created before StateMachine.initialize properly initalized
+        # by calling on_enter for full state path.
+        if 'initialize' in [f.function for f in inspect.stack()]:
+            return
+
         event.cargo['source_event'].cargo['data'].append(state)
         event.propagate = True
         assert state == m.leaf_state
@@ -1249,6 +1292,11 @@ def test_state_machine_reference_present_in_event_with_nested_machines():
     s1.add_state(s2, initial=True)
 
     def do(state, event):
+        # Test created before StateMachine.initialize properly initalized
+        # by calling on_enter for full state path.
+        if 'initialize' in [f.function for f in inspect.stack()]:
+            return
+
         assert event.state_machine == m
         assert state == m.leaf_state
 
@@ -1284,11 +1332,21 @@ def test_state_instance_passed_to_an_event_handler():
     s0.add_state(s2)
 
     def on_enter(state, event):
+        # Test created before StateMachine.initialize properly initalized
+        # by calling on_enter for full state path.
+        if 'initialize' in [f.function for f in inspect.stack()]:
+            return
+
         source_event = event.cargo['source_event']
         source_event.cargo['test_list'].append(('enter', state))
         assert state == m.leaf_state
 
     def on_exit(state, event):
+        # Test created before StateMachine.initialize properly initalized
+        # by calling on_enter for full state path.
+        if 'initialize' in [f.function for f in inspect.stack()]:
+            return
+
         source_event = event.cargo['source_event']
         source_event.cargo['test_list'].append(('exit', state))
         assert state == m.leaf_state
@@ -1548,6 +1606,11 @@ def test_leaf_state_from_action_method():
             return state_machine
 
         def entry_func(self, state, event):
+            # Test created before StateMachine.initialize properly initalized
+            # by calling on_enter for full state path.
+            if 'initialize' in [f.function for f in inspect.stack()]:
+                return
+
             if state is self.state_1:
                 assert self.sm.leaf_state == self.state_1
             else:

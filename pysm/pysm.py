@@ -695,7 +695,8 @@ class StateMachine(State):
         return state
 
     def initialize(self):
-        '''Initialize states in the state machine.
+        '''
+        Initialize states in the state machine.
 
         After a state machine has been created and all states are added to it,
         :func:`initialize` has to be called.
@@ -716,6 +717,12 @@ class StateMachine(State):
                     machines.append(child_state)
 
         self._leaf_state = self._get_leaf_state(self)
+
+        # Call on_enter for all states to complete initialization.
+        # Not calling _enter_states because that doesn't enter the root machine.
+        for state in self.state_path:
+            evt = Event('enter', propagate=False)
+            state._on(evt)
 
     def dispatch(self, event):
         '''Dispatch an event to a state machine.
