@@ -32,7 +32,6 @@ from pathlib import Path
 import sys
 import textwrap
 
-# TODO: On StateMachine::initialize, call all on_enter events for the initial state.
 # TODO: Put logging method in a common place so it's just a feature to activate.
 # TODO: Make logging a true logging feature
 # TODO: StateMachine with history
