@@ -32,7 +32,11 @@ from pathlib import Path
 import sys
 import textwrap
 
-
+# TODO: On StateMachine::initialize, call all on_enter events for the initial state.
+# TODO: Put logging method in a common place so it's just a feature to activate.
+# TODO: Make logging a true logging feature
+# TODO: StateMachine with history
+# TODO: Add ability to animate diagram by generating PlantUML diagram for every step.
 
 # Required to make it Micropython compatible
 if str(type(defaultdict)).find('module') > 0:
@@ -480,7 +484,6 @@ class StateMachine(State):
             raise ValueError("Description must be a string")
         self._description = desc
 
-
     def add_state(self, state, initial=False):
         '''Add a state to a state machine.
 
@@ -546,6 +549,25 @@ class StateMachine(State):
         while machine.parent:
             machine = machine.parent
         return machine
+
+    @property
+    def state_path(self) -> list[State]:
+        """
+        Returns a list of states from this StateMachine to the leaf State.
+        """
+
+        states = []
+        state_cur = self.leaf_state
+        while state_cur.parent:
+            states.append(state_cur)
+            state_cur = state_cur.parent
+        states.append(state_cur)
+
+        # List was bottom up, want top-down
+        # Reverse the state list
+        states.reverse()
+
+        return states
 
     def add_transition(
             self, from_state, to_state, events, input=None, action=None,
@@ -936,6 +958,7 @@ class StateMachine(State):
             f.write(data)
 
         return data
+
 class Validator(object):
     def __init__(self, state_machine):
         self.state_machine = state_machine
