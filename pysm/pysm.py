@@ -32,10 +32,10 @@ from pathlib import Path
 import sys
 import textwrap
 
-# TODO: Put logging method in a common place so it's just a feature to activate.
+# TODO: Put logging method in a common place so it's just a feature to activate
 # TODO: Make logging a true logging feature
 # TODO: StateMachine with history
-# TODO: Add ability to animate diagram by generating PlantUML diagram for every step.
+# TODO: Add ability to animate diagram by generating diagram for every step.
 
 # Required to make it Micropython compatible
 if str(type(defaultdict)).find('module') > 0:
@@ -108,6 +108,7 @@ class AnyEvent(object):
     class.
     '''
     pass
+
 
 any_event = AnyEvent()
 
@@ -320,7 +321,7 @@ class State(object):
         del event  # Unused (silence pylint)
         return True
 
-    def _log_event(self,event:Event,msg:str=""):
+    def _log_event(self, event:Event, msg:str=""):
         """
         Log the event
         """
@@ -718,7 +719,8 @@ class StateMachine(State):
         self._leaf_state = self._get_leaf_state(self)
 
         # Call on_enter for all states to complete initialization.
-        # Not calling _enter_states because that doesn't enter the root machine.
+        # Not calling _enter_states because that doesn't enter the
+        # root machine.
         for state in self.state_path:
             evt = Event('enter', propagate=False)
             state._on(evt)
@@ -884,7 +886,7 @@ class StateMachine(State):
             filename = f"HSM-{self.name}.puml"
         if not isinstance(filename,str):
             raise ValueError("Filename must be a string")
-        filename = Path(filename).with_suffix('.puml') # type: ignore
+        filename = Path(filename).with_suffix('.puml')  # type: ignore
 
         data = "@startuml\n"
         data += f"\t{self.name}: {self.description}\n"
@@ -947,7 +949,7 @@ class StateMachine(State):
             filename = f"HSM-{self.name}.gv"
         if not isinstance(filename,str):
             raise ValueError("Filename must be a string")
-        filename = Path(filename).with_suffix('.gv') # type: ignore
+        filename = Path(filename).with_suffix('.gv')  # type: ignore
 
         data = f"digraph {self.name}" + ' {\n'
         data += '\tfontname="sans-serif"\n'
@@ -964,6 +966,7 @@ class StateMachine(State):
             f.write(data)
 
         return data
+
 
 class Validator(object):
     def __init__(self, state_machine):
