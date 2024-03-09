@@ -26,6 +26,7 @@ Goals:
 
 '''
 from collections import defaultdict, deque
+import inspect
 import logging
 from pathlib import Path
 import sys
@@ -315,6 +316,13 @@ class State(object):
         del state  # Unused (silence pylint)
         del event  # Unused (silence pylint)
         return True
+
+    def _log_event(self,event:Event,msg:str=""):
+        """
+        Log the event
+        """
+
+        print(f"{event} -> {self.name}::{inspect.stack()[1].function}: {msg}")
 
 
 class TransitionsContainer(object):
