@@ -32,9 +32,10 @@ from pathlib import Path
 import sys
 import textwrap
 
+# TODO: StateMachine with history
 # TODO: Put logging method in a common place so it's just a feature to activate
 # TODO: Make logging a true logging feature
-# TODO: StateMachine with history
+# TODO: Add event handler list to StateMachine diagram in body of state.
 # TODO: Add ability to animate diagram by generating diagram for every step.
 
 # Required to make it Micropython compatible
@@ -238,9 +239,13 @@ class State(object):
         }
 
     '''
-    def __init__(self, name):
+    def __init__(self, name:str="Unnamed"):
         self.parent = None
-        self.name = name
+
+        if not isinstance(name,str):
+            raise ValueError("Name must be a string")
+        self._name = name
+
         # self.id = 1
         self.handlers = {}
         self.initial = False
@@ -306,6 +311,10 @@ class State(object):
                 return True
             parent = parent.parent
         return False
+
+    @property
+    def name(self)->str:
+        return self._name
 
     def _on(self, event):
         if event.name in self.handlers:
@@ -463,7 +472,7 @@ class StateMachine(State):
     '''
     STACK_SIZE = 32
 
-    def __init__(self, name):
+    def __init__(self, name:str="Unnamed",is_history:bool=False):
         super(StateMachine, self).__init__(name)
         self.states = set()
         self.state = None
@@ -474,6 +483,10 @@ class StateMachine(State):
         self._leaf_state = None
         self._description = ""
 
+        if not isinstance(is_history,bool):
+            raise ValueError("is_history must be a boolean")
+        self._is_history = is_history
+
     @property
     def description(self)->str:
         return self._description
@@ -483,6 +496,16 @@ class StateMachine(State):
         if not isinstance(desc,str):
             raise ValueError("Description must be a string")
         self._description = desc
+
+    @property
+    def is_history(self)->bool:
+        """
+        Returns True if this state is a history state.
+        History states retain their last active substate to be
+        re-entered when returning to the parent state machine.
+        """
+
+        return self._is_history
 
     def add_state(self, state, initial=False):
         '''Add a state to a state machine.
@@ -764,8 +787,13 @@ class StateMachine(State):
             exit_event.state_machine = self
             self.root_machine._leaf_state = state
             state._on(exit_event)
+
             state.parent.state_stack.push(state)
-            state.parent.state = state.parent.initial_state
+
+            # If not a history state, then use initial state.
+            if not state.parent.is_history:
+                state.parent.state = state.parent.initial_state
+
             state = state.parent
         return state
 

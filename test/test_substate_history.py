@@ -56,8 +56,8 @@ class StatePaused(State):
 
 class StateWorking(StateMachine):
 
-    def __init__(self,name):
-        super().__init__(name)
+    def __init__(self,name,**kwargs):
+        super().__init__(name,**kwargs)
         self.enter_called = False
 
     def on_enter(self,state,event):
@@ -132,7 +132,7 @@ def test_substate_history():
     state_paused = StatePaused("Paused")
     root.add_state(state_paused)
 
-    state_working = StateWorking("Working")
+    state_working = StateWorking("Working",is_history=True)
     root.add_state(state_working, initial=True)
 
     substate1 = Substate1("Substate1")
