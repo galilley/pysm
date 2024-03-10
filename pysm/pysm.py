@@ -32,8 +32,6 @@ from pathlib import Path
 import sys
 import textwrap
 
-# TODO: Make logging a true logging feature
-# TODO: Add event handler list to StateMachine diagram in body of state.
 # TODO: Add ability to animate diagram by generating diagram for every step.
 
 # Required to make it Micropython compatible
