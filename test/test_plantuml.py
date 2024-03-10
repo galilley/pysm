@@ -43,3 +43,10 @@ def test_plantuml_tooltips():
     txt = "[[{" + f"{file}#{line}" + "}" + " on_error()]]"
 
     assert txt in uml
+
+
+def test_plantuml_note():
+
+    txt = "Test NOTE"
+    uml = sm.to_plantuml(note=txt)
+    assert txt in uml

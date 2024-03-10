@@ -960,7 +960,9 @@ class StateMachine(State):
 
         return data
 
-    def to_plantuml(self, filename: str | None = None) -> str:
+    def to_plantuml(
+        self, filename: str | None = None, note: str | None = None
+    ) -> str:
         """
         Generates PlantUML state diagram.
 
@@ -975,8 +977,6 @@ class StateMachine(State):
         docker run -d -p 30001:8080 plantuml/plantuml-server:jetty
         """
 
-        # TODO: Add handler fcn names to states
-        # TODO: Add gaurd condition fcn names to transitions
         # TODO: Add note argument for top level note.  Useful anim time.
         # TODO: Optional bold for currenty active states.
         # TODO: Optional color for last transition taken
@@ -997,7 +997,14 @@ class StateMachine(State):
             raise ValueError("Filename must be a string")
         filename = Path(filename).with_suffix(".puml")  # type: ignore
 
+        if note is not None and not isinstance(note, str):
+            raise ValueError("Note must be a string")
+
         data = "@startuml\n"
+
+        if note:
+            data += f'note "{note}" as N1\n'
+
         data += f"\t{self.name}: {self.description}\n"
         data = self._state_to_uml(self, data)
 
