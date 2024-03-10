@@ -33,6 +33,9 @@ import sys
 import textwrap
 
 # TODO: Add ability to animate diagram by generating diagram for every step.
+#       Might be better to do as a replay of a log file.
+#       Take a state machine definition & log file and generate a diagram
+#       Might want to generate a gantt chart too.
 
 # Required to make it Micropython compatible
 if str(type(defaultdict)).find("module") > 0:
@@ -1024,16 +1027,18 @@ class StateMachine(State):
         str: The PlantUML diagram data.
         """
 
-        # TODO: Optional color for last transition taken
-        # TODO: Optional bold/color for visited states
-        # TODO: Option color for vistited transitions
+        # TODO: Optional highlight last transition taken
+        # TODO: Optional highlight visited states
+        # TODO: Option highlight vistited transitions
 
-        # TODO: List states
-        # TODO: List transitions
-        # TODO: List visited transitions
-        # TODO: List vistited states
-        # TODO: List unvitisted states
-        # TODO: List univisited transitions
+        # TODO: List all states: StateMachine::states_all->list[State]
+        # TODO: List all transitions: StateMachine::transitions_all->list[(State,State,str)]
+        # TODO: List visit count for all states: StateMachine::states_visits->dict[State,int]
+        # TODO: List visit count for all transitions: StateMachine:transitions_visits->dict[(State,State,str)),int]
+        # TODO: List vistited states:  StateMachine::states_visitied->list[State]
+        # TODO: List visited transitions: StateMachine:transitions_visited->list[(State,State,str))]
+        # TODO: List unvitisted states: StateMachine::states_unvisited->list[State]
+        # TODO: List univisited transitions: StateMachine:transitions_unvisited->list[(State,State,str))]
 
         if filename is None:
             filename = f"HSM-{self.name}.puml"
