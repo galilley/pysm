@@ -188,9 +188,13 @@ class Event(object):
         self.state_machine = None
 
     def __repr__(self):
-        return "<Event {0}, input={1}, cargo={2} ({3})>".format(
-            self.name, self.input, self.cargo, hex(id(self))
-        )
+        id_str = hex(id(self))
+        id_str = f"{id_str}"
+
+        repr = f"<Event {self.name}, input={self.input},"
+        repr += f"cargo={self.cargo} ({id_str})>"
+
+        return repr
 
 
 class State(object):

@@ -2,12 +2,14 @@
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter",
         "editor.formatOnSave": true,
-        "testing.unittestEnabled": false,
-        "testing.pytestEnabled": true,
-        "python.testing.pytestArgs": ["test"],
     },
     "debugpy.debugJustMyCode": false,
     "black-formatter.args": [
         "--line-length=80"
     ],
+    "python.testing.pytestArgs": [
+        "test"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
 }
