@@ -155,7 +155,11 @@ def test_substate_history():
     state_working.add_transition(substate2, substate1, events=["step_complete"])
 
     root.initialize()
-    root.to_plantuml()
+
+    # Test UML highlighting of active.
+    assert substate1.is_active
+    uml = root.to_plantuml(highlight_active=True)
+    assert "state Substate1 #line.bold;" in uml
 
     # Verify initialize called on_enter for all states on
     # path to initial leaf state.
@@ -193,6 +197,10 @@ def test_substate_history():
     assert substate2.is_active
     assert not substate1.is_active
     assert not state_paused.is_active
+
+    # Test UML highlighting of active.
+    uml = root.to_plantuml(highlight_active=True)
+    assert "state Substate2 #line.bold;" in uml
 
     # Pause
     root.dispatch(Event("pause"))

@@ -907,7 +907,12 @@ class StateMachine(State):
         except IndexError:
             return
 
-    def _state_to_uml(self, state, data: str = "") -> str:
+    # This is a high complexity function, but most of the complexity is
+    # simple checks.
+    # flake8: noqa: C901
+    def _state_to_uml(
+        self, state, data: str = "", highlight_active: bool = False
+    ) -> str:
         """
         Generate a mermaid diagram for a single state
         """
@@ -918,6 +923,8 @@ class StateMachine(State):
             return data
 
         data += f"state {state.name} "
+        if highlight_active and state.is_active:
+            data += "##[bold] "
         data += "{\n"
 
         # State descriptions
@@ -939,7 +946,12 @@ class StateMachine(State):
                 desc += f"* [[{meta} {fcn.__name__}()]]\\n"
             desc = desc.strip()
 
-            data += f"\t{s.name}: {desc}\n"
+            # State info
+            data += f"\tstate {s.name}"
+            if highlight_active and s.is_active:
+                data += " #line.bold;"
+
+            data += f": {desc}\n"
 
         # Initial state
         data += f"\t[*] --> {state.initial_state.name}\n"
@@ -947,6 +959,9 @@ class StateMachine(State):
         # Add in all of the transitions
         if hasattr(state, "_transitions"):
             for event, trans in state._transitions._transitions.items():
+                if trans == []:
+                    continue
+
                 t = trans[0]
                 src = t["from_state"].name
                 dest = t["to_state"]
@@ -973,12 +988,17 @@ class StateMachine(State):
         # Handle substates.
         for s in self.states:
             if isinstance(s, StateMachine):
-                data = s._state_to_uml(s, data)
+                data = s._state_to_uml(
+                    s, data, highlight_active=highlight_active
+                )
 
         return data
 
     def to_plantuml(
-        self, filename: str | None = None, note: str | None = None
+        self,
+        filename: str | None = None,
+        note: str | None = None,
+        highlight_active: bool = False,
     ) -> str:
         """
         Generates PlantUML state diagram.
@@ -992,9 +1012,18 @@ class StateMachine(State):
 
         To run the PlantUML server in a Docker container:
         docker run -d -p 30001:8080 plantuml/plantuml-server:jetty
+
+        Parameters
+        ----------
+        filename(str, optional): Name of the file to save the diagram to.
+        note(str, optional): Optional note to add to the diagram.
+        highlight_active(bool, optional): Highlight the currently active states.
+
+        Returns
+        -------
+        str: The PlantUML diagram data.
         """
 
-        # TODO: Optional bold for currenty active states.
         # TODO: Optional color for last transition taken
         # TODO: Optional bold/color for visited states
         # TODO: Option color for vistited transitions
@@ -1021,7 +1050,7 @@ class StateMachine(State):
             data += f'note "{note}" as N1\n'
 
         data += f"\t{self.name}: {self.description}\n"
-        data = self._state_to_uml(self, data)
+        data = self._state_to_uml(self, data, highlight_active=highlight_active)
 
         # Close out uml
         data += "@enduml\n"
