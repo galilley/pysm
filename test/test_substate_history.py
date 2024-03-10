@@ -1,3 +1,4 @@
+import pytest
 from pysm import State, StateMachine, Event
 
 
@@ -207,6 +208,34 @@ def test_substate_history():
     root.dispatch(Event("resume"))
     assert root.state == state_working
     assert root.leaf_state == substate1
+
+
+def test_event_reuse():
+
+    # States
+    root = StateRoot("TopLevel")
+    root.description = "Simple machine to substate history event."
+
+    state_paused = StatePaused("Paused")
+    root.add_state(state_paused)
+
+    state_working = StateWorking("Working", is_history=True)
+    root.add_state(state_working, initial=True)
+
+    # Transitions
+    root.add_transition(state_working, state_paused, events=["pause"])
+    root.add_transition(state_paused, state_working, events=["resume"])
+
+    root.initialize()
+
+    evt_pause = Event("pause")
+    evt_resume = Event("resume")
+
+    root.dispatch(evt_pause)
+    root.dispatch(evt_resume)
+
+    with pytest.raises(Exception):
+        root.dispatch(evt_pause)
 
 
 if __name__ == "__main__":

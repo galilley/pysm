@@ -773,6 +773,11 @@ class StateMachine(State):
         :type event: :class:`.Event`
 
         """
+
+        # Disallow event reuse
+        if event.state_machine is not None:
+            raise ValueError("Event has already been dispatched.  Do not reuse events.")
+
         event.state_machine = self
         leaf_state_before = self.leaf_state
         leaf_state_before._on(event)
