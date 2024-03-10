@@ -54,15 +54,15 @@ class Parser(object):
         self.init_sm()
 
     def init_sm(self):
-        start = State('Start')
-        identifier = State('Identifier')
-        operator = State('Operator')
-        number = State('Number')
-        start_quote = State('StartQuote')
-        string_st = State('String')
-        end_quote = State('EndQuote')
+        start = State(name='Start')
+        identifier = State(name='Identifier')
+        operator = State(name='Operator')
+        number = State(name='Number')
+        start_quote = State(name='StartQuote')
+        string_st = State(name='String')
+        end_quote = State(name='EndQuote')
 
-        sm = StateMachine(self)
+        sm = StateMachine()
         sm.add_states(
             start, identifier, operator, number, start_quote, string_st,
             end_quote)
