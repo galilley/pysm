@@ -1,5 +1,6 @@
-from test_simple_on_off import sm
+from test_simple_on_off import sm, state_on, state_off
 import string
+
 
 def test_plantuml():
 
@@ -10,6 +11,8 @@ def test_plantuml():
         @startuml
             sm:
         state sm {
+            on:
+            off:
             [*] --> on
             on --> off: off
             off --> on: on
@@ -20,3 +23,20 @@ def test_plantuml():
     uml = sm.to_plantuml().translate(mapping)
 
     assert uml == uml_expected
+
+
+def test_plantuml_tooltips():
+
+    from pathlib import Path
+
+    def on_error(state, event):
+        pass
+
+    sm.add_transition(state_on, state_off, events=["error"], condition=on_error)
+    uml = sm.to_plantuml()
+
+    file = Path(on_error.__code__.co_filename).name
+    line = on_error.__code__.co_firstlineno
+    txt = "[[{" + f"{file}#{line}" + "}" + " on_error()]]"
+
+    assert txt in uml

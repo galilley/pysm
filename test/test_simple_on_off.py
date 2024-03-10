@@ -1,24 +1,25 @@
 from pysm import State, StateMachine, Event
 
-on = State('on')
-off = State('off')
+state_on = State("on")
+state_off = State("off")
 
-sm = StateMachine('sm')
-sm.add_state(on, initial=True)
-sm.add_state(off)
+sm = StateMachine("sm")
+sm.add_state(state_on, initial=True)
+sm.add_state(state_off)
 
-sm.add_transition(on, off, events=['off'])
-sm.add_transition(off, on, events=['on'])
+sm.add_transition(state_on, state_off, events=["off"])
+sm.add_transition(state_off, state_on, events=["on"])
 
 sm.initialize()
 
+
 def test():
-    assert sm.state == on
-    sm.dispatch(Event('off'))
-    assert sm.state == off
-    sm.dispatch(Event('on'))
-    assert sm.state == on
+    assert sm.state == state_on
+    sm.dispatch(Event("off"))
+    assert sm.state == state_off
+    sm.dispatch(Event("on"))
+    assert sm.state == state_on
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test()

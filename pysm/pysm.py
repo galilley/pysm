@@ -943,8 +943,12 @@ class StateMachine(State):
 
                 # Event
                 evt = str(event[1])
-                if t["condition"].__name__ != "_nop":
-                    evt += f"({t['condition'].__name__})"
+                fcn = t["condition"]
+                if fcn.__name__ != "_nop":
+                    file = Path(fcn.__code__.co_filename).name
+                    line = fcn.__code__.co_firstlineno
+                    meta = "{" + file + "#" + str(line) + "}"
+                    evt += f":[[{meta} {fcn.__name__}()]]\\n"
 
                 data += f"\t{src} --> {dest.name}{history}: {evt}\n"
         data += "}\n"
