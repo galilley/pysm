@@ -35,7 +35,6 @@ import textwrap
 
 # TODO: Put logging method in a common place so it's just a feature to activate
 # TODO: Make logging a true logging feature
-# TODO: Denote history states in StateMachine diagram.
 # TODO: Add event handler list to StateMachine diagram in body of state.
 # TODO: Add ability to animate diagram by generating diagram for every step.
 
@@ -903,15 +902,18 @@ class StateMachine(State):
                 dest = t["to_state"]
                 if dest is None:
                     dest = src
-                else:
-                    dest = dest.name
+
+                # Denote history states
+                history = ""
+                if isinstance(dest, StateMachine) and dest.is_history:
+                    history = "[H]"
 
                 # Event
                 evt = str(event[1])
                 if t["condition"].__name__ != "_nop":
                     evt += f"({t['condition'].__name__})"
 
-                data += f"\t{src} --> {dest}: {evt}\n"
+                data += f"\t{src} --> {dest.name}{history}: {evt}\n"
         data += "}\n"
 
         # Handle substates.
