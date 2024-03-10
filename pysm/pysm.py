@@ -318,6 +318,22 @@ class State(object):
     def name(self) -> str:
         return self._name
 
+    @property
+    def event_names(self) -> list[str]:
+        """
+        List of names of events that this state handles.
+        """
+
+        return self.handlers.keys()
+
+    @property
+    def handler_names(self) -> list[str]:
+        """
+        List of names of handler functions/methods.
+        """
+
+        return [h.__name__ for h in self.handlers.values()]
+
     def _on(self, event):
         if event.name in self.handlers:
             event.propagate = False
@@ -879,6 +895,8 @@ class StateMachine(State):
         Generate a mermaid diagram for a single state
         """
 
+        from pathlib import Path
+
         if not isinstance(state, StateMachine):
             return data
 
@@ -887,13 +905,24 @@ class StateMachine(State):
 
         # State descriptions
         for s in state.states:
+            desc = ""
             if isinstance(s, StateMachine):
                 desc = s.description
                 if desc != "":
                     desc = "\\n".join(
                         textwrap.wrap(desc, width=len(s.name) * 4)
                     )
-                data += f"\t{s.name}: {desc}\n"
+                    desc += "\\n"
+
+            # List handler functions
+            for fcn in s.handlers.values():
+                file = Path(fcn.__code__.co_filename).name
+                line = fcn.__code__.co_firstlineno
+                meta = "{" + file + "#" + str(line) + "}"
+                desc += f"- [[{meta} {fcn.__name__}()]]\\n"
+            desc = desc.strip()
+
+            data += f"\t{s.name}: {desc}\n"
 
         # Initial state
         data += f"\t[*] --> {state.initial_state.name}\n"
@@ -941,6 +970,22 @@ class StateMachine(State):
         To run the PlantUML server in a Docker container:
         docker run -d -p 30001:8080 plantuml/plantuml-server:jetty
         """
+
+        # TODO: Add handler fcn names to states
+        # TODO: Add gaurd condition fcn names to transitions
+        # TODO: Add note argument for top level note.  Useful anim time.
+        # TODO: Optional bold for currenty active states.
+        # TODO: Optional color for last transition taken
+        # TODO: Optional bold/color for visited states
+        # TODO: Option color for vistited transitions
+
+        # TODO: State tracks whether it is active or not.
+        # TODO: List states
+        # TODO: List transitions
+        # TODO: List visited transitions
+        # TODO: List vistited states
+        # TODO: List unvitisted states
+        # TODO: List univisited transitions
 
         if filename is None:
             filename = f"HSM-{self.name}.puml"
