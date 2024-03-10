@@ -919,7 +919,7 @@ class StateMachine(State):
                 file = Path(fcn.__code__.co_filename).name
                 line = fcn.__code__.co_firstlineno
                 meta = "{" + file + "#" + str(line) + "}"
-                desc += f"- [[{meta} {fcn.__name__}()]]\\n"
+                desc += f"* [[{meta} {fcn.__name__}()]]\\n"
             desc = desc.strip()
 
             data += f"\t{s.name}: {desc}\n"
