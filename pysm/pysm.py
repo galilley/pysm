@@ -334,6 +334,23 @@ class State(object):
 
         return [h.__name__ for h in self.handlers.values()]
 
+    @property
+    def root_machine(self) -> "StateMachine":
+        """
+        Get the root state machine for this state.
+        """
+
+        machine = self
+        while machine.parent:
+            machine = machine.parent
+        return machine
+
+    @property
+    def is_active(self) -> bool:
+        """True if state is currently active."""
+
+        return self in self.root_machine.state_path
+
     def _on(self, event):
         if event.name in self.handlers:
             event.propagate = False
@@ -977,13 +994,11 @@ class StateMachine(State):
         docker run -d -p 30001:8080 plantuml/plantuml-server:jetty
         """
 
-        # TODO: Add note argument for top level note.  Useful anim time.
         # TODO: Optional bold for currenty active states.
         # TODO: Optional color for last transition taken
         # TODO: Optional bold/color for visited states
         # TODO: Option color for vistited transitions
 
-        # TODO: State tracks whether it is active or not.
         # TODO: List states
         # TODO: List transitions
         # TODO: List visited transitions

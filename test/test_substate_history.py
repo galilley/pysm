@@ -187,6 +187,13 @@ def test_substate_history():
     assert root.state == state_working
     assert root.leaf_state == substate2
 
+    # Verify state is_active properties
+    assert root.is_active
+    assert state_working.is_active
+    assert substate2.is_active
+    assert not substate1.is_active
+    assert not state_paused.is_active
+
     # Pause
     root.dispatch(Event("pause"))
     assert root.state == state_paused
