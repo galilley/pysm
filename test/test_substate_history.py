@@ -210,4 +210,7 @@ def test_substate_history():
 
 
 if __name__ == "__main__":
+    import logging
+
+    logging.basicConfig(level=logging.DEBUG)
     test_substate_history()

@@ -78,6 +78,7 @@ Features
 * Fast (even with hundreds of transition rules)
 * Not too many pythonisms, so that it's easily portable to other languages (ie. `JavaScript <https://github.com/pgularski/smjs>`_).
 * Micropython support
+* PlantUML state chart diagrams from state machine objects.
 
 
 Installation
@@ -126,6 +127,14 @@ docker run -d -p 30001:8080 plantuml/plantuml-server:jetty
 * And use an integrated VSCode previewer: https://marketplace.visualstudio.com/items?itemName=well-ar.plantuml
     * Note that the VSCode plugin expects the server on `localhost:30001`.
 
+Usage Notes
+-----------
+* You must declare an initial state for all StateMachine objects.
+* Do not reuse `Event` objects.  Event state is tracked within the event.
+* Full event processing logs are available by configuring the `logging` module `DEBUG` level.
+    * Add `logging.basicConfig(level=logging.DEBUG)` to configure `DEBUG` logging.
+* Internal transitions are those where the destination state is set to `None`.  On an internal transition, the `on_enter` event is not called.
+* Self external transitions are those where the source and destination are the same, but neither is `None`. The `on_enter` and `on_exit` functions are called.
 
 Links
 -----

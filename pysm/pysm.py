@@ -41,6 +41,11 @@ if str(type(defaultdict)).find("module") > 0:
     # pylint: disable=no-member
     defaultdict = defaultdict.defaultdict
 
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler(sys.stdout)
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+
 
 # Required to make it Micropython compatible
 def patch_deque(deque_module):
@@ -95,12 +100,6 @@ except TypeError:
         deque = patch_deque(MockDequeModule)
 else:
     del test_deque
-
-
-logger = logging.getLogger(__name__)
-handler = logging.StreamHandler(sys.stdout)
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
 
 
 class AnyEvent(object):
@@ -186,7 +185,7 @@ class Event(object):
         self.state_machine = None
 
     def __repr__(self):
-        return "<Event {0}, input={1}, cargo={2} ({3})>".format(
+        return "<Event '{0}', input={1}, cargo={2} ({3})>".format(
             self.name, self.input, self.cargo, hex(id(self))
         )
 
@@ -326,8 +325,7 @@ class State(object):
             event.propagate = False
 
             # Logging
-            # TODO: Convert to python logging module call
-            print(
+            logging.debug(
                 f"{event} -> {self.name}::{self.handlers[event.name].__name__}"
             )
 
