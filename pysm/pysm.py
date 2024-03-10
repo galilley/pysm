@@ -33,7 +33,6 @@ from pathlib import Path
 import sys
 import textwrap
 
-# TODO: Put logging method in a common place so it's just a feature to activate
 # TODO: Make logging a true logging feature
 # TODO: Add event handler list to StateMachine diagram in body of state.
 # TODO: Add ability to animate diagram by generating diagram for every step.
@@ -330,6 +329,13 @@ class State(object):
     def _on(self, event):
         if event.name in self.handlers:
             event.propagate = False
+
+            # Logging
+            # TODO: Convert to python logging module call
+            print(
+                f"{event} -> {self.name}::{self.handlers[event.name].__name__}"
+            )
+
             self.handlers[event.name](self, event)
         # Never propagate exit/enter events, even if propagate is set to True
         if (
@@ -337,19 +343,13 @@ class State(object):
             and event.propagate
             and event.name not in ("exit", "enter")
         ):
+
             self.parent._on(event)
 
     def _nop(self, state, event):
         del state  # Unused (silence pylint)
         del event  # Unused (silence pylint)
         return True
-
-    def _log_event(self, event: Event, msg: str = ""):
-        """
-        Log the event
-        """
-
-        print(f"{event} -> {self.name}::{inspect.stack()[1].function}: {msg}")
 
 
 class TransitionsContainer(object):
@@ -785,6 +785,7 @@ class StateMachine(State):
         event.state_machine = self
         leaf_state_before = self.leaf_state
         leaf_state_before._on(event)
+
         transition = self._get_transition(event)
         if transition is None:
             return

@@ -8,20 +8,19 @@ class StateRoot(StateMachine):
         self.enter_called = False
 
     def on_enter(self, state, event):
-        self._log_event(event, "Entering")
         self.enter_called = True
 
     def on_exit(self, state, event):
-        self._log_event(event, "Exiting")
+        pass
 
     def on_tick(self, state, event):
-        self._log_event(event, "Tick")
+        pass
 
     def on_error(self, state, event):
-        self._log_event(event, "Unhandled error event")
+        pass
 
     def on_mystery(self, state, event):
-        self._log_event(event, "Unhandled mystery event")
+        pass
 
     def register_handlers(self):
         self.handlers = {
@@ -40,14 +39,14 @@ class StatePaused(State):
         self.enter_called = False
 
     def on_enter(self, state, event):
-        self._log_event(event, "Entering")
+        pass
         self.enter_called = True
 
     def on_exit(self, state, event):
-        self._log_event(event, "Exiting")
+        pass
 
     def on_resume(self, state, event):
-        self._log_event(event, "Resuming")
+        pass
 
     def register_handlers(self):
         self.handlers = {
@@ -64,14 +63,14 @@ class StateWorking(StateMachine):
         self.enter_called = False
 
     def on_enter(self, state, event):
-        self._log_event(event, "Entering")
         self.enter_called = True
+        pass
 
     def on_exit(self, state, event):
-        self._log_event(event, "Exiting")
+        pass
 
     def on_pause(self, state, event):
-        self._log_event(event, "Pausing")
+        pass
 
     def register_handlers(self):
         self.handlers = {
@@ -88,14 +87,14 @@ class Substate1(State):
         self.enter_called = False
 
     def on_enter(self, state, event):
-        self._log_event(event, "Entering")
         self.enter_called = True
+        pass
 
     def on_exit(self, state, event):
-        self._log_event(event, "Exiting")
+        pass
 
     def on_step_complete(self, state, event):
-        self._log_event(event, "Step Complete")
+        pass
 
     def register_handlers(self):
         self.handlers = {
@@ -112,14 +111,14 @@ class Substate2(State):
         self.enter_called = False
 
     def on_enter(self, state, event):
-        self._log_event(event, "Entering")
         self.enter_called = True
+        pass
 
     def on_exit(self, state, event):
-        self._log_event(event, "Exiting")
+        pass
 
     def on_step_complete(self, state, event):
-        self._log_event(event, "Step Complete")
+        pass
 
     def register_handlers(self):
         self.handlers = {
@@ -172,6 +171,7 @@ def test_substate_history():
     assert root.state_path == p
 
     # Pause
+    Event("pause")
     root.dispatch(Event("pause"))
     assert root.state == state_paused
     assert root.leaf_state == state_paused
