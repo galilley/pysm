@@ -46,7 +46,7 @@ import textwrap
 # TODO: List visited transitions: StateMachine:transitions_visited->list[(State,State,str))]
 # TODO: List unvitisted states: StateMachine::states_unvisited->list[State]
 # TODO: List univisited transitions: StateMachine:transitions_unvisited->list[(State,State,str))]
-
+# TODO: Use the Repo class to add link to source code for D2 diagrams.
 
 # Required to make it Micropython compatible
 if str(type(defaultdict)).find("module") > 0:
@@ -1168,17 +1168,34 @@ class StateMachine(State):
         """
 
         from pathlib import Path
+        import inspect
 
+        def source_info(obj):
+            cls = obj.__class__
+            line_number = cls.__dict__.get("__init__").__code__.co_firstlineno
+            file_name = inspect.getfile(cls)
+            return file_name, line_number
+
+        # Parent draws child states.
+        # If a child, we're done.
         if not isinstance(state, StateMachine):
             return data
 
-        data += f"{state.name}.class: state\n"
+        # Draw self
+        fn, lno = source_info(state)
+        data += f"{state.name}.class: state # {fn}#{lno}\n"
         # if highlight_active and state.is_active:
         #     data += "##[bold] "
         data += f"{state.name}: " + "{\n"
 
         if self.description:
-            data += f"\ttooltip: {self.description}"
+            desc = textwrap.wrap(self.description, width=40)
+            desc = "\\n".join(desc)
+            data += f"\ttooltip: {desc}\n"
+
+        # Denote history states
+        if isinstance(state, StateMachine) and state.is_history:
+            data += f"\tHistory.class: history\n"
 
         # State descriptions
         for s in state.states:
@@ -1200,7 +1217,8 @@ class StateMachine(State):
             desc = desc.strip()
 
             # State info
-            data += f"\t{s.name}.class: state\n"
+            fn, lno = source_info(s)
+            data += f"\t{s.name}.class: state # {fn}#{lno}\n"
             # if highlight_active and s.is_active:
             #     data += " #line.bold;"
 
@@ -1222,29 +1240,27 @@ class StateMachine(State):
                 if dest is None:
                     dest = src
 
-                # Denote history states
-                history = ""
-                if isinstance(dest, StateMachine) and dest.is_history:
-                    history = "[H]"
-
                 # Event
                 evt = str(event[1])
-                fcn = t["condition"]
-                if fcn.__name__ != "_nop":
-                    file = Path(fcn.__code__.co_filename).name
-                    line = fcn.__code__.co_firstlineno
-                    meta = "{" + file + "#" + str(line) + "}"
-                    evt += f":[[{meta} {fcn.__name__}()]]\\n"
+                # fcn = t["condition"]
+                # if fcn.__name__ != "_nop":
+                #     file = Path(fcn.__code__.co_filename).name
+                #     line = fcn.__code__.co_firstlineno
+                #     meta = "{" + file + "#" + str(line) + "}"
+                #     evt += f":[[{meta} {fcn.__name__}()]]\\n"
 
-                data += f"\t{src} --> {dest.name}{history}: {evt}\n"
-        data += "}\n"
+                data += f"\t{src} --> {dest.name}: {evt}\n"
+
+        data += "\n"
 
         # Handle substates.
         for s in self.states:
             if isinstance(s, StateMachine):
-                data = s._state_to_uml(
+                data = s._state_to_d2(
                     s, data, highlight_active=highlight_active
                 )
+
+        data += "}\n"
 
         return data
 
