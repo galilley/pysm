@@ -32,8 +32,6 @@ from pathlib import Path
 import sys
 import textwrap
 
-# TODO: Investigate generating D2 diagrams.  Might have better rendering.
-#       https://d2lang.com/
 # TODO: With D2, the git module and introspection, generate hyperlink to source code on server.
 # TODO: Add ability to animate diagram by generating diagram for every step.
 #       Might be better to do as a replay of a log file.
