@@ -1,6 +1,6 @@
 # Test configurations
 import pytest
-from pysm import State, StateMachine, Event
+from pysm import State, StateMachine
 
 
 class StateRoot(StateMachine):
@@ -155,7 +155,5 @@ def complex_state_machine():
 
     state_working.add_transition(substate1, substate2, events=["step_complete"])
     state_working.add_transition(substate2, substate1, events=["step_complete"])
-
-    root.initialize()
 
     return root

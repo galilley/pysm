@@ -658,6 +658,16 @@ class StateMachine(State):
                 states.extend(state.states_all)
         return states
 
+    def state_get_by_name(self, name: str) -> State:
+        """
+        Get a state by name.
+        """
+
+        for state in self.states_all:
+            if state.name == name:
+                return state
+        return None
+
     def add_transition(
         self,
         from_state,
