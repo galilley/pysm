@@ -117,6 +117,7 @@ directly from the state machine object by calling the `to_plantuml` method on th
 object.
 
 To view the diagrams, you can:
+
 * Use the PlantUML online editor (http://www.plantuml.com/plantuml/uml/).
 * Run a local server via Docker:
 
@@ -134,12 +135,10 @@ directly from the state machine object by calling the `to_d2` method on the stat
 object.
 
 To view the diagrams, you can:
+
 * Install the D2 applicaiton (https://d2lang.com/tour/install).
-
 * Use the D2 online editor (https://terrastruct.com/d2-studio/).
-
 * Use an integrated VSCode previewer: https://marketplace.visualstudio.com/items?itemName=terrastruct.d2
-
 
 Usage Notes
 -----------
