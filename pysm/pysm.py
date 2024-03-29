@@ -32,10 +32,21 @@ from pathlib import Path
 import sys
 import textwrap
 
+# TODO: Investigate generating D2 diagrams.  Might have better rendering.
+#       https://d2lang.com/
+# TODO: With D2, the git module and introspection, generate hyperlink to source code on server.
 # TODO: Add ability to animate diagram by generating diagram for every step.
 #       Might be better to do as a replay of a log file.
 #       Take a state machine definition & log file and generate a diagram
 #       Might want to generate a gantt chart too.
+# TODO: List all transitions: StateMachine::transitions_all->list[(State,State,str)]
+# TODO: List visit count for all states: StateMachine::states_visits->dict[State,int]
+# TODO: List visit count for all transitions: StateMachine:transitions_visits->dict[(State,State,str)),int]
+# TODO: List vistited states:  StateMachine::states_visitied->list[State]
+# TODO: List visited transitions: StateMachine:transitions_visited->list[(State,State,str))]
+# TODO: List unvitisted states: StateMachine::states_unvisited->list[State]
+# TODO: List univisited transitions: StateMachine:transitions_unvisited->list[(State,State,str))]
+
 
 # Required to make it Micropython compatible
 if str(type(defaultdict)).find("module") > 0:
@@ -634,6 +645,19 @@ class StateMachine(State):
 
         return states
 
+    @property
+    def states_all(self) -> list[State]:
+        """
+        Returns list of all substates of this StateMachine
+        """
+
+        states = []
+        for state in self.states:
+            states.append(state)
+            if isinstance(state, StateMachine):
+                states.extend(state.states_all)
+        return states
+
     def add_transition(
         self,
         from_state,
@@ -1031,15 +1055,6 @@ class StateMachine(State):
         # TODO: Optional highlight visited states
         # TODO: Option highlight vistited transitions
 
-        # TODO: List all states: StateMachine::states_all->list[State]
-        # TODO: List all transitions: StateMachine::transitions_all->list[(State,State,str)]
-        # TODO: List visit count for all states: StateMachine::states_visits->dict[State,int]
-        # TODO: List visit count for all transitions: StateMachine:transitions_visits->dict[(State,State,str)),int]
-        # TODO: List vistited states:  StateMachine::states_visitied->list[State]
-        # TODO: List visited transitions: StateMachine:transitions_visited->list[(State,State,str))]
-        # TODO: List unvitisted states: StateMachine::states_unvisited->list[State]
-        # TODO: List univisited transitions: StateMachine:transitions_unvisited->list[(State,State,str))]
-
         if filename is None:
             filename = f"HSM-{self.name}.puml"
         if not isinstance(filename, str):
@@ -1125,6 +1140,193 @@ class StateMachine(State):
 
         # Close out dot
         data += "}"
+
+        # Write to file
+        with open(str(filename), "w") as f:
+            f.write(data)
+
+        return data
+
+    # This is a high complexity function, but most of the complexity is
+    # simple checks.
+    # flake8: noqa: C901
+    def _state_to_d2(
+        self, state, data: str = "", highlight_active: bool = False
+    ) -> str:
+        """
+        Generate a D2 diagram for a single state
+        """
+
+        from pathlib import Path
+
+        if not isinstance(state, StateMachine):
+            return data
+
+        data += f"{state.name}.class: state\n"
+        # if highlight_active and state.is_active:
+        #     data += "##[bold] "
+        data += f"{state.name}: " + "{\n"
+
+        if self.description:
+            data += f"\ttooltip: {self.description}"
+
+        # State descriptions
+        for s in state.states:
+            desc = ""
+            if isinstance(s, StateMachine):
+                desc = s.description
+                if desc != "":
+                    desc = "\\n".join(
+                        textwrap.wrap(desc, width=len(s.name) * 4)
+                    )
+                    desc += "\\n"
+
+            # List handler functions
+            for fcn in s.handlers.values():
+                file = Path(fcn.__code__.co_filename).name
+                line = fcn.__code__.co_firstlineno
+                meta = "{" + file + "#" + str(line) + "}"
+                desc += f"* [[{meta} {fcn.__name__}()]]\\n"
+            desc = desc.strip()
+
+            # State info
+            data += f"\t{s.name}.class: state\n"
+            # if highlight_active and s.is_active:
+            #     data += " #line.bold;"
+
+            # data += f": {desc}\n"
+
+        # Initial state
+        data += f"\tInitial.class: initial\n"
+        data += f"\tInitial --> {state.initial_state.name}\n"
+
+        # Add in all of the transitions
+        if hasattr(state, "_transitions"):
+            for event, trans in state._transitions._transitions.items():
+                if trans == []:
+                    continue
+
+                t = trans[0]
+                src = t["from_state"].name
+                dest = t["to_state"]
+                if dest is None:
+                    dest = src
+
+                # Denote history states
+                history = ""
+                if isinstance(dest, StateMachine) and dest.is_history:
+                    history = "[H]"
+
+                # Event
+                evt = str(event[1])
+                fcn = t["condition"]
+                if fcn.__name__ != "_nop":
+                    file = Path(fcn.__code__.co_filename).name
+                    line = fcn.__code__.co_firstlineno
+                    meta = "{" + file + "#" + str(line) + "}"
+                    evt += f":[[{meta} {fcn.__name__}()]]\\n"
+
+                data += f"\t{src} --> {dest.name}{history}: {evt}\n"
+        data += "}\n"
+
+        # Handle substates.
+        for s in self.states:
+            if isinstance(s, StateMachine):
+                data = s._state_to_uml(
+                    s, data, highlight_active=highlight_active
+                )
+
+        return data
+
+    def to_d2(
+        self,
+        filename: str | None = None,
+        note: str | None = None,
+        highlight_active: bool = False,
+    ) -> str:
+        """
+        Generates D2 state diagram.
+
+        D3 diagrams: https://d2lang.com/
+
+        To install the D2 binary:
+        TODO: Instructions
+
+        VSCode viewer plugin:
+        TODO: Link
+
+        Parameters
+        ----------
+        filename(str, optional): Name of the file to save the diagram to.
+        note(str, optional): Optional note to add to the diagram.
+        highlight_active(bool, optional): Highlight the currently active states.
+
+        Returns
+        -------
+        str: The D2 diagram data.
+        """
+
+        # TODO: Directly generate SVG
+
+        # TODO: Optional highlight last transition taken
+        # TODO: Optional highlight visited states
+        # TODO: Option highlight vistited transitions
+
+        if filename is None:
+            filename = f"HSM-{self.name}.d2"
+        if not isinstance(filename, str):
+            raise ValueError("Filename must be a string")
+        filename = Path(filename).with_suffix(".d2")  # type: ignore
+
+        if note is not None and not isinstance(note, str):
+            raise ValueError("Note must be a string")
+
+        data = f"# State Machine: {self.name}"
+        data += "# D2 State Diagram"
+        data += "# https://d2lang.com/"
+
+        data += textwrap.dedent(
+            """
+        # Special Classes
+        classes: {
+
+            state: {
+                label.near: top-left
+                style :{
+                    border-radius: 8
+                }
+
+            }
+
+            initial: {
+                label: ""
+                width: 20
+                height: 20
+                shape: circle
+                style: {
+                    fill: "#000000"
+                    stroke: "#000000"
+                }
+            }
+
+            history: {
+                label: H
+                width: 20
+                height: 20
+                shape: circle
+            }
+
+        }
+
+        """
+        )
+
+        # TODO: Support note.
+        # if note:
+        #     data += f'note "{note}" as N1\n'
+
+        # data += f"\t{self.name}: {self.description}\n"
+        data = self._state_to_d2(self, data, highlight_active=highlight_active)
 
         # Write to file
         with open(str(filename), "w") as f:
