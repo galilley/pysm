@@ -1,5 +1,4 @@
 from test_simple_on_off import sm, state_on, state_off
-import string
 
 
 def test_plantuml():
