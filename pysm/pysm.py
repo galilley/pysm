@@ -31,6 +31,7 @@ import logging
 from pathlib import Path
 import sys
 import textwrap
+from typing import Optional
 
 # TODO: With D2, the git module and introspection, generate hyperlink to source code on server.
 # TODO: Add ability to animate diagram by generating diagram for every step.
@@ -575,6 +576,10 @@ class StateMachine(State):
         state.parent = self
         self.states.add(state)
 
+        # return the added state
+        # to avoid dummy naming in some cases
+        return state
+
     def add_states(self, *states):
         """Add `states` to the |StateMachine|.
 
@@ -665,6 +670,12 @@ class StateMachine(State):
             if state.name == name:
                 return state
         return None
+
+    def __getitem__(self, name):
+        state = self.state_get_by_name(name)
+        if state is None:
+            raise ValueError(f"There is no State named '{name}'")
+        return state
 
     def add_transition(
         self,
@@ -978,7 +989,9 @@ class StateMachine(State):
                 file = Path(fcn.__code__.co_filename).name
                 line = fcn.__code__.co_firstlineno
                 meta = "{" + file + "#" + str(line) + "}"
-                desc += f"* [[{meta} {fcn.__name__}()]]\\n"
+                doc = "/ "+ fcn.__doc__ if fcn.__doc__ else ""
+                # doc.replace("\n","\\n").replace("\t","\\t") TODO, parsing new lines
+                desc += f"* [[{meta} {fcn.__name__}()]] {doc}\\n"
             desc = desc.strip()
 
             # State info
@@ -994,31 +1007,45 @@ class StateMachine(State):
         # Add in all of the transitions
         if hasattr(state, "_transitions"):
             for event, trans in state._transitions._transitions.items():
+                layout = '->'  # Use horizontal layout for the first transition
                 if trans == []:
+                    print(f"Event '{event}' has no transitions")
                     continue
 
-                t = trans[0]
-                src = t["from_state"].name
-                dest = t["to_state"]
-                if dest is None:
-                    dest = src
+                # We could have a few transition with different conditions
+                for t in trans:
+                    src = t["from_state"]
+                    dest = t["to_state"]
+                    if dest is None:
+                        dest = src
 
-                # Denote history states
-                history = ""
-                if isinstance(dest, StateMachine) and dest.is_history:
-                    history = "[H]"
+                    # Denote history states
+                    history = ""
+                    if isinstance(dest, StateMachine) and dest.is_history:
+                        history = "[H]"
 
-                # Event
-                evt = str(event[1])
-                fcn = t["condition"]
-                if fcn.__name__ != "_nop":
-                    file = Path(fcn.__code__.co_filename).name
-                    line = fcn.__code__.co_firstlineno
-                    meta = "{" + file + "#" + str(line) + "}"
-                    evt += f":[[{meta} {fcn.__name__}()]]\\n"
+                    # Event
+                    evt = str(event[1])
+                    fcn = t["condition"]
+                    fact = t["action"]
+                    act = ""
+                    if fcn.__name__ != "_nop":
+                        file = Path(fcn.__code__.co_filename).name
+                        line = fcn.__code__.co_firstlineno
+                        meta = "{" + file + "#" + str(line) + "}"
+                        evt += f":[[{meta} {fcn.__name__}()]]\\n"
+                    else:
+                        evt += "\\n"
+                    if fact.__name__ != "_nop":
+                        act = "\\\\t" + fact.__name__ + "\\n"
+                    else:
+                        act = ""
 
-                data += f"\t{src} --> {dest.name}{history}: {evt}\n"
-        data += "}\n"
+                    data += f"\t{src.name} {layout} {dest.name}{history}: {evt}{act}\n"
+
+                    # Change layout for additoinal transitions
+                    if layout == '->':
+                        layout = '-->'
 
         # Handle substates.
         for s in self.states:
@@ -1027,12 +1054,16 @@ class StateMachine(State):
                     s, data, highlight_active=highlight_active
                 )
 
+        # Close here for compatibility with old syntax
+        # TODO, make as an option
+        data += "}\n"
+
         return data
 
     def to_plantuml(
         self,
-        filename: str | None = None,
-        note: str | None = None,
+        filename: Optional[str] = None,
+        note: Optional[str] = None,
         highlight_active: bool = False,
     ) -> str:
         """
@@ -1102,6 +1133,9 @@ class StateMachine(State):
 
         # Add in all of hte transitions
         for event, trans in state._transitions._transitions.items():
+            if trans == []:
+                continue
+
             t = trans[0]
             src = t["from_state"].name
             dest = t["to_state"]
@@ -1126,7 +1160,7 @@ class StateMachine(State):
 
         return data
 
-    def to_graphviz(self, filename: str | None = None) -> str:
+    def to_graphviz(self, filename: Optional[str] = None) -> str:
         """
         Generate a graphviz diagram of the state machine
         """
@@ -1230,6 +1264,7 @@ class StateMachine(State):
         if hasattr(state, "_transitions"):
             for event, trans in state._transitions._transitions.items():
                 if trans == []:
+                    print(f"Event '{event}' has no transitions")
                     continue
 
                 t = trans[0]
@@ -1264,8 +1299,8 @@ class StateMachine(State):
 
     def to_d2(
         self,
-        filename: str | None = None,
-        note: str | None = None,
+        filename: Optional[str] = None,
+        note: Optional[str] = None,
         highlight_active: bool = False,
     ) -> str:
         """
@@ -1407,7 +1442,7 @@ class Validator(object):
                 self._raise(msg)
 
     def validate_add_transition(self, from_state, to_state, events, input):
-        self._validate_from_state(from_state)
+        # self._validate_from_state(from_state)
         self._validate_to_state(to_state)
         self._validate_events(events)
         self._validate_input(input)
